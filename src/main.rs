@@ -75,7 +75,7 @@ fn fill_in_matrix(matrix: &mut DMatrix<char>) {
                 paint = true;
             } else if current == TERRAIN && paint {
                 let mut potential_trench = Vec::new();
-                while j < matrix.ncols() && matrix[(i, j)] == TERRAIN {
+                while j < matrix.ncols() && matrix[(i, j)] == TERRAIN && matrix[(i - 1, j)] == TRENCH {
                     potential_trench.push((i, j));
                     j += 1;
                 }
@@ -95,14 +95,11 @@ fn fill_in_matrix(matrix: &mut DMatrix<char>) {
 fn solution(file: &str) -> usize {
     let steps = follow_path(file);
     let dimens = get_min_matrix_dimens(&steps);
-    println!("{:?}", dimens);
     let mut matrix = DMatrix::from_element(dimens.0, dimens.1, TERRAIN);
     for step in steps {
-        println!("{:?}", step);
         matrix[((step.0 + dimens.2) as usize, (step.1 + dimens.3) as usize)] = TRENCH;
     }
     fill_in_matrix(&mut matrix);
-    println!("{}", matrix);
     let mut sum = 0;
     for i in 0..matrix.nrows() {
         for j in 0..matrix.ncols() {
@@ -115,6 +112,6 @@ fn solution(file: &str) -> usize {
 }
 
 fn main() {
-    // assert_eq!(solution("example.txt"), 62);
+    assert_eq!(solution("example.txt"), 62);
     assert_eq!(solution("input.txt"), 39601);
 }
