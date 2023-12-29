@@ -4,7 +4,7 @@ use std::{fs::File, io::{BufReader, BufRead}};
 const TRENCH: char = '#';
 const TERRAIN: char = '.';
 
-type Coord = (usize, usize);
+type Coord = (i32, i32);
 
 enum Direction {
     Up,
@@ -24,7 +24,7 @@ impl Direction {
         }
     }
 
-    fn get_path_from_steps(self: &Self, start: Coord, steps: usize) -> Vec<Coord> {
+    fn get_path_from_steps(self: &Self, start: Coord, steps: i32) -> Vec<Coord> {
         match self {
             Direction::Up => (start.0 - steps..start.0).rev().map(|x| (x, start.1)).collect(),
             Direction::Down => (start.0 + 1..start.0 + steps + 1).map(|x| (x, start.1)).collect(),
@@ -35,7 +35,7 @@ impl Direction {
 }
 
 fn follow_path(file: &str) -> Vec<Coord> {
-    let mut path: Vec<(usize, usize)> = Vec::new();
+    let mut path: Vec<(i32, i32)> = Vec::new();
     let file = File::open(file).expect("Error opening file");
     let lines = BufReader::new(file).lines();
     let mut start = (0, 0);
@@ -43,7 +43,7 @@ fn follow_path(file: &str) -> Vec<Coord> {
         let line = line.expect("Error reading line");
         let mut split = line.split_whitespace();
         let direction = Direction::from_char(split.next().unwrap().chars().next().unwrap());
-        let steps = split.next().unwrap().parse::<usize>().unwrap();
+        let steps = split.next().unwrap().parse::<i32>().unwrap();
         // let hex = split.next().unwrap();
         path.append(&mut direction.get_path_from_steps(start, steps));
         start = path.last().unwrap().clone();
@@ -51,14 +51,18 @@ fn follow_path(file: &str) -> Vec<Coord> {
     path
 }
 
-fn get_min_matrix_dimens(steps: &Vec<Coord>) -> Coord {
+fn get_min_matrix_dimens(steps: &Vec<Coord>) -> (usize, usize, i32, i32) {
     let mut min_x = 0;
     let mut min_y = 0;
+    let mut max_x = 0;
+    let mut max_y = 0;
     for step in steps {
-        min_x = min_x.max(step.0);
-        min_y = min_y.max(step.1);
+        min_x = min_x.min(step.0);
+        min_y = min_y.min(step.1);
+        max_x = max_x.max(step.0);
+        max_y = max_y.max(step.1);
     }
-    (min_x + 1, min_y + 1)
+    ((max_x + 1 - min_x).try_into().unwrap(), (max_y + 1 - min_y).try_into().unwrap(), min_x.abs(), min_y.abs())
 }
 
 fn fill_in_matrix(matrix: &mut DMatrix<char>) {
@@ -91,9 +95,11 @@ fn fill_in_matrix(matrix: &mut DMatrix<char>) {
 fn solution(file: &str) -> usize {
     let steps = follow_path(file);
     let dimens = get_min_matrix_dimens(&steps);
+    println!("{:?}", dimens);
     let mut matrix = DMatrix::from_element(dimens.0, dimens.1, TERRAIN);
     for step in steps {
-        matrix[step] = TRENCH;
+        println!("{:?}", step);
+        matrix[((step.0 + dimens.2) as usize, (step.1 + dimens.3) as usize)] = TRENCH;
     }
     fill_in_matrix(&mut matrix);
     println!("{}", matrix);
@@ -109,6 +115,6 @@ fn solution(file: &str) -> usize {
 }
 
 fn main() {
-    assert_eq!(solution("example.txt"), 62);
-    assert_eq!(solution("input.txt"), 0);
+    // assert_eq!(solution("example.txt"), 62);
+    assert_eq!(solution("input.txt"), 39601);
 }
