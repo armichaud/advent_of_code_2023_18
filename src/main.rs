@@ -24,6 +24,16 @@ impl Direction {
         }
     }
 
+    fn from_int(i: i32) -> Direction {
+        match i {
+            0 => Direction::Right,
+            1 => Direction::Down,
+            2 => Direction::Left,
+            3 => Direction::Up,
+            _ => panic!("Invalid direction"),
+        }
+    }
+
     fn get_path_from_steps(self: &Self, start: Coord, steps: i32) -> Vec<Coord> {
         match self {
             Direction::Up => (start.0 - steps..start.0).rev().map(|x| (x, start.1)).collect(),
@@ -34,7 +44,7 @@ impl Direction {
     }
 }
 
-fn follow_path(file: &str) -> Vec<Coord> {
+fn follow_path(file: &str, use_hex_instructions: bool) -> Vec<Coord> {
     let mut path: Vec<(i32, i32)> = Vec::new();
     let file = File::open(file).expect("Error opening file");
     let lines = BufReader::new(file).lines();
@@ -42,9 +52,13 @@ fn follow_path(file: &str) -> Vec<Coord> {
     for line in lines {
         let line = line.expect("Error reading line");
         let mut split = line.split_whitespace();
-        let direction = Direction::from_char(split.next().unwrap().chars().next().unwrap());
-        let steps = split.next().unwrap().parse::<i32>().unwrap();
-        // let hex = split.next().unwrap();
+        let mut direction = Direction::from_char(split.next().unwrap().chars().next().unwrap());
+        let mut steps = split.next().unwrap().parse::<i32>().unwrap();
+        if use_hex_instructions {
+            let mut hex = split.next().unwrap().split("").filter(|c| !c.is_empty() && char::is_alphanumeric(c.chars().next().unwrap())).collect::<Vec<&str>>();
+            direction = Direction::from_int(hex.pop().unwrap().parse::<i32>().unwrap());
+            steps = i32::from_str_radix(&hex.concat(), 16).unwrap();
+        }
         path.append(&mut direction.get_path_from_steps(start, steps));
         start = path.last().unwrap().clone();
     }
@@ -92,8 +106,8 @@ fn fill_in_matrix(matrix: &mut DMatrix<char>) {
     }
 }
 
-fn solution(file: &str) -> usize {
-    let steps = follow_path(file);
+fn solution(file: &str, use_hex_instructions: bool) -> usize {
+    let steps = follow_path(file, use_hex_instructions);
     let dimens = get_min_matrix_dimens(&steps);
     let mut matrix = DMatrix::from_element(dimens.0, dimens.1, TERRAIN);
     for step in steps {
@@ -112,6 +126,8 @@ fn solution(file: &str) -> usize {
 }
 
 fn main() {
-    assert_eq!(solution("example.txt"), 62);
-    assert_eq!(solution("input.txt"), 39601);
+    //assert_eq!(solution("example.txt", false), 62);
+    //assert_eq!(solution("input.txt", false), 38188);
+    assert_eq!(solution("example.txt", true), 952408144115);
+    //assert_eq!(solution("input.txt", true), 0);
 }
