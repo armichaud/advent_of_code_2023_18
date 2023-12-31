@@ -114,7 +114,6 @@ fn fill_in_hypothetical_matrix(dimens: (usize, usize, i32, i32), terrain: &mut H
     let row_stop = dimens.0 - 1;
     let col_stop = dimens.1 - 1;
     for i in 1..row_stop {
-        println!("Row: {}", i);
         let mut paint = false;
         let mut j = 0;
         while j < col_stop {
