@@ -1,5 +1,5 @@
 use nalgebra::DMatrix;
-use std::{fs::File, io::{BufReader, BufRead}};
+use std::{fs::File, io::{BufReader, BufRead}, collections::HashSet};
 
 const TRENCH: char = '#';
 const TERRAIN: char = '.';
@@ -106,21 +106,61 @@ fn fill_in_matrix(matrix: &mut DMatrix<char>) {
     }
 }
 
+fn get_cell(terrain: &HashSet<(i32, i32)>, coords: (usize, usize), row_offset: i32, col_offset: i32) -> char {
+    if terrain.contains(&(coords.0  as i32 - row_offset, coords.1 as i32- col_offset)) { TRENCH } else { TERRAIN }
+}
+
+fn fill_in_hypothetical_matrix(dimens: (usize, usize, i32, i32), terrain: &mut HashSet<(i32, i32)>) -> usize {
+    let row_stop = dimens.0 - 1;
+    let col_stop = dimens.1 - 1;
+    for i in 1..row_stop {
+        println!("Row: {}", i);
+        let mut paint = false;
+        let mut j = 0;
+        while j < col_stop {
+            let current = get_cell(&terrain, (i, j), dimens.2, dimens.3);
+            if current == TRENCH && !paint {
+                paint = true;
+            } else if current == TERRAIN && paint {
+                let mut potential_trench = Vec::new();
+                while j < dimens.1 && get_cell(&terrain, (i, j), dimens.2, dimens.3) == TERRAIN && get_cell(&terrain, (i - 1, j), dimens.2, dimens.3) == TRENCH {
+                    potential_trench.push((i, j));
+                    j += 1;
+                }
+                if j == dimens.1 {
+                    break;
+                }
+                for coord in potential_trench { 
+                    let coord = (coord.0 as i32, coord.1 as i32);
+                    terrain.insert(coord);
+                }
+                paint = false;
+            }
+            j += 1;
+        }
+    }
+    terrain.len()
+}
+
 fn solution(file: &str, use_hex_instructions: bool) -> usize {
     let steps = follow_path(file, use_hex_instructions);
     let dimens = get_min_matrix_dimens(&steps);
-    let mut matrix = DMatrix::from_element(dimens.0, dimens.1, TERRAIN);
-    for step in steps {
-        matrix[((step.0 + dimens.2) as usize, (step.1 + dimens.3) as usize)] = TRENCH;
-    }
-    fill_in_matrix(&mut matrix);
     let mut sum = 0;
-    for i in 0..matrix.nrows() {
-        for j in 0..matrix.ncols() {
-            if matrix[(i, j)] == TRENCH {
-                sum += 1;
+    if !use_hex_instructions {
+        let mut matrix = DMatrix::from_element(dimens.0, dimens.1, TERRAIN);
+        for step in steps {
+            matrix[((step.0 + dimens.2) as usize, (step.1 + dimens.3) as usize)] = TRENCH;
+        }
+        fill_in_matrix(&mut matrix);
+        for i in 0..matrix.nrows() {
+            for j in 0..matrix.ncols() {
+                if matrix[(i, j)] == TRENCH {
+                    sum += 1;
+                }
             }
         }
+    } else {
+        sum = fill_in_hypothetical_matrix(dimens, &mut steps.iter().map(|x| (x.0, x.1)).collect());
     }
     sum
 }
