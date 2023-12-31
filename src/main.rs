@@ -106,10 +106,12 @@ fn fill_in_matrix(matrix: &mut DMatrix<char>) {
     }
 }
 
+#[allow(dead_code)]
 fn get_cell(terrain: &HashSet<(i32, i32)>, coords: (usize, usize), row_offset: i32, col_offset: i32) -> char {
     if terrain.contains(&(coords.0  as i32 - row_offset, coords.1 as i32- col_offset)) { TRENCH } else { TERRAIN }
 }
 
+#[allow(dead_code)]
 fn fill_in_hypothetical_matrix(dimens: (usize, usize, i32, i32), terrain: &mut HashSet<(i32, i32)>) -> usize {
     let row_stop = dimens.0 - 1;
     let col_stop = dimens.1 - 1;
@@ -141,6 +143,13 @@ fn fill_in_hypothetical_matrix(dimens: (usize, usize, i32, i32), terrain: &mut H
     terrain.len()
 }
 
+fn space_around(trench: HashSet<Coord>, nrows: usize, ncols: usize) -> usize {
+    let mut sum = 0;
+    let start = (0, 0);
+    let mut stack = Vec::<Coord>::from([start]);
+    let mut visited = HashSet::<Coord>::from([start]);
+}
+
 fn solution(file: &str, use_hex_instructions: bool) -> usize {
     let steps = follow_path(file, use_hex_instructions);
     let dimens = get_min_matrix_dimens(&steps);
@@ -159,7 +168,8 @@ fn solution(file: &str, use_hex_instructions: bool) -> usize {
             }
         }
     } else {
-        sum = fill_in_hypothetical_matrix(dimens, &mut steps.iter().map(|x| (x.0, x.1)).collect());
+        // sum = fill_in_hypothetical_matrix(dimens, &mut steps.iter().map(|x| (x.0, x.1)).collect());
+        sum = (dimens.0 - 1) * (dimens.1 - 1) - (space_around(steps, dimens.0, dimens.1));
     }
     sum
 }
