@@ -144,10 +144,54 @@ fn fill_in_hypothetical_matrix(dimens: (usize, usize, i32, i32), terrain: &mut H
 }
 
 fn space_around(trench: HashSet<Coord>, nrows: usize, ncols: usize) -> usize {
+    let last_row = nrows as i32 - 1;
+    let last_col = ncols as i32 - 1;
     let mut sum = 0;
-    let start = (0, 0);
-    let mut stack = Vec::<Coord>::from([start]);
-    let mut visited = HashSet::<Coord>::from([start]);
+    let mut stack = Vec::<Coord>::new();
+    for i in 0..nrows {
+        if !trench.contains(&(i as i32, 0)) {
+            stack.push((i as i32, 0));
+        }
+        if !trench.contains(&(i as i32, last_col)) {
+            stack.push((i as i32, last_col));
+        }
+    }
+    for j in 0..ncols {
+        if !trench.contains(&(0, j as i32)) {
+            stack.push((0, j as i32));
+        }
+        if !trench.contains(&(last_row, j as i32)) {
+            stack.push((last_row, j as i32));
+        }
+    }
+    let mut visited = HashSet::from(stack.iter().map(|x| (x.0, x.1)).collect::<HashSet<Coord>>());
+    while stack.len() > 0 {
+        let current = stack.pop().unwrap();
+        if visited.contains(&current) {
+            continue;
+        }
+        sum += 1;
+        let mut neighbors = Vec::<Coord>::new();
+        if current.0 > 0 {
+            neighbors.push((current.0 - 1, current.1));
+        }
+        if current.0 < nrows as i32 - 1 {
+            neighbors.push((current.0 + 1, current.1));
+        }
+        if current.1 > 0 {
+            neighbors.push((current.0, current.1 - 1));
+        }
+        if current.1 < ncols as i32 - 1 {
+            neighbors.push((current.0, current.1 + 1));
+        }
+        for neighbor in neighbors {
+            if !visited.contains(&neighbor) && !trench.contains(&neighbor) {
+                stack.push(neighbor);
+                visited.insert(neighbor);
+            }
+        }
+    }
+    sum
 }
 
 fn solution(file: &str, use_hex_instructions: bool) -> usize {
@@ -169,7 +213,7 @@ fn solution(file: &str, use_hex_instructions: bool) -> usize {
         }
     } else {
         // sum = fill_in_hypothetical_matrix(dimens, &mut steps.iter().map(|x| (x.0, x.1)).collect());
-        sum = (dimens.0 - 1) * (dimens.1 - 1) - (space_around(steps, dimens.0, dimens.1));
+        sum = ((dimens.0 - 1) * (dimens.1 - 1)) - (space_around(steps.iter().map(|x| (x.0, x.1)).collect(), dimens.0, dimens.1));
     }
     sum
 }
