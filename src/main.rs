@@ -164,7 +164,7 @@ fn space_around(trench: HashSet<Coord>, nrows: usize, ncols: usize) -> usize {
             stack.push((last_row, j as i32));
         }
     }
-    let mut visited = HashSet::from(stack.iter().map(|x| (x.0, x.1)).collect::<HashSet<Coord>>());
+    let mut visited = HashSet::new();
     while stack.len() > 0 {
         let current = stack.pop().unwrap();
         if visited.contains(&current) {
@@ -213,9 +213,7 @@ fn solution(file: &str, use_hex_instructions: bool) -> usize {
         }
     } else {
         // sum = fill_in_hypothetical_matrix(dimens, &mut steps.iter().map(|x| (x.0, x.1)).collect());
-        let total_space = dimens.0 * dimens.1;
-        let space_around = space_around(steps.iter().map(|x| (x.0, x.1)).collect(), dimens.0, dimens.1);
-        sum = total_space - space_around; // - steps.len();
+        sum = (dimens.0 * dimens.1) - space_around(steps.iter().map(|x| (x.0, x.1)).collect(), dimens.0, dimens.1);
     }
     sum
 }
