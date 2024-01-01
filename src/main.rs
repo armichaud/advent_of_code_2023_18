@@ -170,6 +170,7 @@ fn space_around(trench: HashSet<Coord>, nrows: usize, ncols: usize) -> usize {
         if visited.contains(&current) {
             continue;
         }
+        visited.insert(current);
         sum += 1;
         let mut neighbors = Vec::<Coord>::new();
         if current.0 > 0 {
@@ -187,7 +188,6 @@ fn space_around(trench: HashSet<Coord>, nrows: usize, ncols: usize) -> usize {
         for neighbor in neighbors {
             if !visited.contains(&neighbor) && !trench.contains(&neighbor) {
                 stack.push(neighbor);
-                visited.insert(neighbor);
             }
         }
     }
@@ -213,7 +213,9 @@ fn solution(file: &str, use_hex_instructions: bool) -> usize {
         }
     } else {
         // sum = fill_in_hypothetical_matrix(dimens, &mut steps.iter().map(|x| (x.0, x.1)).collect());
-        sum = ((dimens.0 - 1) * (dimens.1 - 1)) - (space_around(steps.iter().map(|x| (x.0, x.1)).collect(), dimens.0, dimens.1));
+        let total_space = dimens.0 * dimens.1;
+        let space_around = space_around(steps.iter().map(|x| (x.0, x.1)).collect(), dimens.0, dimens.1);
+        sum = total_space - space_around; // - steps.len();
     }
     sum
 }
